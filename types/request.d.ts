@@ -9,5 +9,6 @@ export interface RequestHandler {
 export declare class DefaultRequestHandler implements RequestHandler {
     options: RequestHandlerOption;
     constructor(options?: RequestHandlerOption);
+    private initAgents;
     request<T>(url: string, callback: RequestCallback<T>): void;
 }

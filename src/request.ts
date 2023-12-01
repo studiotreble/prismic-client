@@ -13,7 +13,11 @@ interface NodeRequestInit extends RequestInit {
   agent?: any;
 }
 
-function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: RequestCallback<T>): void {
+
+
+
+
+function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: RequestCallback<T>, retries = 5, retryDelay = 5000): void {
 
   const fetchOptions = {
     headers: {
@@ -30,18 +34,17 @@ function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: R
 
   const fetchPromise = crossFetch(url, fetchOptions)
 
+  options.timeoutInMs = options.timeoutInMs || 30000;
+
   const promise = options.timeoutInMs ? Promise.race([
     fetchPromise,
     new Promise((_, reject) => {
-      timeoutId = setTimeout(
-        () => reject(new Error(`${url} response timeout`)),
-        options.timeoutInMs
-      )
-    }) as Promise<Response>
-  ]) : fetchPromise
+      timeoutId = setTimeout(() => reject(new Error(`${url} response timeout`)), options.timeoutInMs);
+    })
+  ]) : fetchPromise;
+
 
   promise.then((resp: Response) => {
-
     clearTimeout(timeoutId);
 
     if (resp.status === 429) {
@@ -78,9 +81,16 @@ function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: R
 
       callback(null, result, resp, ttl);
     });
+
   }).catch(err => {
     clearTimeout(timeoutId);
-    callback(err);
+    if (retries > 0) {
+      setTimeout(() => {
+        fetchRequest(url, options, callback, retries - 1, retryDelay);
+      }, retryDelay);
+    } else {
+      callback(err);
+    }
   });
 }
 

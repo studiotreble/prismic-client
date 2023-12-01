@@ -1,24 +1,26 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('cross-fetch')) :
     typeof define === 'function' && define.amd ? define(['cross-fetch'], factory) :
-    (global = global || self, global.PrismicJS = factory(global.fetch));
-}(this, (function (crossFetch) { 'use strict';
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.PrismicJS = factory(global.fetch));
+})(this, (function (crossFetch) { 'use strict';
 
-    crossFetch = crossFetch && Object.prototype.hasOwnProperty.call(crossFetch, 'default') ? crossFetch['default'] : crossFetch;
+    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+    var crossFetch__default = /*#__PURE__*/_interopDefaultLegacy(crossFetch);
 
     /*! *****************************************************************************
-    Copyright (c) Microsoft Corporation. All rights reserved.
-    Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-    this file except in compliance with the License. You may obtain a copy of the
-    License at http://www.apache.org/licenses/LICENSE-2.0
+    Copyright (c) Microsoft Corporation.
 
-    THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-    WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-    MERCHANTABLITY OR NON-INFRINGEMENT.
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
 
-    See the Apache Version 2.0 License for specific language governing permissions
-    and limitations under the License.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
     /* global Reflect, Promise */
 
@@ -1023,7 +1025,9 @@
      * The API allows up to 200 requests per second.
      */
     var DEFUALT_RETRY_AFTER_MS = 1000;
-    function fetchRequest(url, options, callback) {
+    function fetchRequest(url, options, callback, retries, retryDelay) {
+        if (retries === void 0) { retries = 5; }
+        if (retryDelay === void 0) { retryDelay = 5000; }
         var fetchOptions = {
             headers: {
                 Accept: 'application/json',
@@ -1034,7 +1038,8 @@
         }
         // can't use number because of NodeJS globals included
         var timeoutId;
-        var fetchPromise = crossFetch(url, fetchOptions);
+        var fetchPromise = crossFetch__default["default"](url, fetchOptions);
+        options.timeoutInMs = options.timeoutInMs || 30000;
         var promise = options.timeoutInMs ? Promise.race([
             fetchPromise,
             new Promise(function (_, reject) {
@@ -1075,7 +1080,14 @@
             });
         }).catch(function (err) {
             clearTimeout(timeoutId);
-            callback(err);
+            if (retries > 0) {
+                setTimeout(function () {
+                    fetchRequest(url, options, callback, retries - 1, retryDelay);
+                }, retryDelay);
+            }
+            else {
+                callback(err);
+            }
         });
     }
     var DefaultRequestHandler = /** @class */ (function () {
@@ -1363,5 +1375,5 @@
 
     return index;
 
-})));
+}));
 //# sourceMappingURL=client.js.map

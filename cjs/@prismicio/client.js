@@ -1,41 +1,42 @@
 'use strict';
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+var crossFetch = require('cross-fetch');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 function _interopNamespace(e) {
-    if (e && e.__esModule) { return e; } else {
-        var n = {};
-        if (e) {
-            Object.keys(e).forEach(function (k) {
+    if (e && e.__esModule) return e;
+    var n = Object.create(null);
+    if (e) {
+        Object.keys(e).forEach(function (k) {
+            if (k !== 'default') {
                 var d = Object.getOwnPropertyDescriptor(e, k);
                 Object.defineProperty(n, k, d.get ? d : {
                     enumerable: true,
-                    get: function () {
-                        return e[k];
-                    }
+                    get: function () { return e[k]; }
                 });
-            });
-        }
-        n['default'] = e;
-        return n;
+            }
+        });
     }
+    n["default"] = e;
+    return Object.freeze(n);
 }
 
-var crossFetch = _interopDefault(require('cross-fetch'));
+var crossFetch__default = /*#__PURE__*/_interopDefaultLegacy(crossFetch);
 
 /*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
+Copyright (c) Microsoft Corporation.
 
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
 
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 /* global Reflect, Promise */
 
@@ -1040,7 +1041,9 @@ var DefaultApiCache = /** @class */ (function () {
  * The API allows up to 200 requests per second.
  */
 var DEFUALT_RETRY_AFTER_MS = 1000;
-function fetchRequest(url, options, callback) {
+function fetchRequest(url, options, callback, retries, retryDelay) {
+    if (retries === void 0) { retries = 5; }
+    if (retryDelay === void 0) { retryDelay = 5000; }
     var fetchOptions = {
         headers: {
             Accept: 'application/json',
@@ -1051,7 +1054,8 @@ function fetchRequest(url, options, callback) {
     }
     // can't use number because of NodeJS globals included
     var timeoutId;
-    var fetchPromise = crossFetch(url, fetchOptions);
+    var fetchPromise = crossFetch__default["default"](url, fetchOptions);
+    options.timeoutInMs = options.timeoutInMs || 30000;
     var promise = options.timeoutInMs ? Promise.race([
         fetchPromise,
         new Promise(function (_, reject) {
@@ -1092,7 +1096,14 @@ function fetchRequest(url, options, callback) {
         });
     }).catch(function (err) {
         clearTimeout(timeoutId);
-        callback(err);
+        if (retries > 0) {
+            setTimeout(function () {
+                fetchRequest(url, options, callback, retries - 1, retryDelay);
+            }, retryDelay);
+        }
+        else {
+            callback(err);
+        }
     });
 }
 var DefaultRequestHandler = /** @class */ (function () {
@@ -1107,10 +1118,10 @@ var DefaultRequestHandler = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         if (!(typeof window === 'undefined')) return [3 /*break*/, 3];
-                        return [4 /*yield*/, new Promise(function (resolve) { resolve(_interopNamespace(require('http'))); })];
+                        return [4 /*yield*/, Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('http')); })];
                     case 1:
                         httpModule = _a.sent();
-                        return [4 /*yield*/, new Promise(function (resolve) { resolve(_interopNamespace(require('https'))); })];
+                        return [4 /*yield*/, Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('https')); })];
                     case 2:
                         httpsModule = _a.sent();
                         httpAgent_1 = new httpModule.Agent({ keepAlive: true });

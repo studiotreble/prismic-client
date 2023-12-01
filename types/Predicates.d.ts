@@ -1,7 +1,7 @@
 declare type PredicateValue = boolean | string | number | Date;
 declare const _default: {
-    at(fragment: string, value: string | number | boolean | Date | PredicateValue[]): string;
-    not(fragment: string, value: string | number | boolean | Date | PredicateValue[]): string;
+    at(fragment: string, value: PredicateValue | PredicateValue[]): string;
+    not(fragment: string, value: PredicateValue | PredicateValue[]): string;
     missing(fragment: string): string;
     has(fragment: string): string;
     any(fragment: string, values: PredicateValue[]): string;
