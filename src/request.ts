@@ -1,5 +1,4 @@
 import crossFetch from 'cross-fetch';
-import { Agent as HttpsAgent } from 'https';
 
 /**
  * The default number of milliseconds to wait before retrying a rate-limited
@@ -97,22 +96,32 @@ export interface RequestHandler {
 }
 
 export class DefaultRequestHandler implements RequestHandler {
-
   options: RequestHandlerOption;
 
   constructor(options?: RequestHandlerOption) {
-    // Create an HTTPS agent with keepAlive set to true
-    const httpsAgent = new HttpsAgent({ keepAlive: true });
+    this.options = options || {};
+    this.initAgents();
+  }
 
-    // Merge this agent with any existing options, prioritizing existing options
-    this.options = {
-      ...options,
-      proxyAgent: options && options.proxyAgent ? options.proxyAgent : httpsAgent,
-    };
+  private async initAgents() {
+    if (typeof window === 'undefined') {
+      // Running in Node.js
+      const httpModule = await import('http');
+      const httpsModule = await import('https');
+
+      const httpAgent = new httpModule.Agent({ keepAlive: true });
+      const httpsAgent = new httpsModule.Agent({ keepAlive: true });
+
+      this.options = {
+        ...this.options,
+        proxyAgent: (parsedURL: { protocol: string }) => {
+          return parsedURL.protocol === 'http:' ? httpAgent : httpsAgent;
+        },
+      };
+    }
   }
 
   request<T>(url: string, callback: RequestCallback<T>): void {
-
     fetchRequest(url, this.options, callback);
   }
 }

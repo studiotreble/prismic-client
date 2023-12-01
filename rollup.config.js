@@ -17,5 +17,5 @@ export default {
   plugins: [
     typescript(),
   ],
-  external: ['cross-fetch']
+  external: ['cross-fetch', 'http', 'https']
 }
