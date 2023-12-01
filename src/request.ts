@@ -1,4 +1,5 @@
 import crossFetch from 'cross-fetch';
+import { Agent as HttpsAgent } from 'https';
 
 /**
  * The default number of milliseconds to wait before retrying a rate-limited
@@ -59,11 +60,11 @@ function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: R
     }
 
     if (~~(resp.status / 100 !== 2)) {
-        /**
-         * @description
-         * drain the resp before throwing an error to prevent memory leaks
-         * @link https://github.com/bitinn/node-fetch/issues/83
-         */
+      /**
+       * @description
+       * drain the resp before throwing an error to prevent memory leaks
+       * @link https://github.com/bitinn/node-fetch/issues/83
+       */
       return resp.text().then(() => {
         const e: any = new Error(`Unexpected status code [${resp.status}] on URL ${url}`);
         e.status = resp.status;
@@ -100,7 +101,14 @@ export class DefaultRequestHandler implements RequestHandler {
   options: RequestHandlerOption;
 
   constructor(options?: RequestHandlerOption) {
-    this.options = options || {};
+    // Create an HTTPS agent with keepAlive set to true
+    const httpsAgent = new HttpsAgent({ keepAlive: true });
+
+    // Merge this agent with any existing options, prioritizing existing options
+    this.options = {
+      ...options,
+      proxyAgent: options && options.proxyAgent ? options.proxyAgent : httpsAgent,
+    };
   }
 
   request<T>(url: string, callback: RequestCallback<T>): void {
