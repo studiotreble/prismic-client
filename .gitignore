@@ -164,9 +164,3 @@ typings/
 
 ## documentation
 docs/
-
-# build folders
-esm/
-cjs/
-umd/
-types/
