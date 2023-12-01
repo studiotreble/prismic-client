@@ -1031,7 +1031,7 @@ function fetchRequest(url, options, callback, retries, retryDelay) {
     // can't use number because of NodeJS globals included
     var timeoutId;
     var fetchPromise = crossFetch(url, fetchOptions);
-    options.timeoutInMs = options.timeoutInMs || 30000;
+    options.timeoutInMs = options.timeoutInMs || 5000;
     var promise = options.timeoutInMs ? Promise.race([
         fetchPromise,
         new Promise(function (_, reject) {

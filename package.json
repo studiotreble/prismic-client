@@ -10,7 +10,7 @@
     "content",
     "api"
   ],
-  "version": "5.2.3-custom",
+  "version": "5.2.4-custom",
   "engines": {
     "node": ">=0.10.3"
   },

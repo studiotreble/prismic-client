@@ -34,7 +34,7 @@ function fetchRequest<T>(url: string, options: RequestHandlerOption, callback: R
 
   const fetchPromise = crossFetch(url, fetchOptions)
 
-  options.timeoutInMs = options.timeoutInMs || 30000;
+  options.timeoutInMs = options.timeoutInMs || 5000;
 
   const promise = options.timeoutInMs ? Promise.race([
     fetchPromise,
